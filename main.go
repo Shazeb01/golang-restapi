@@ -49,7 +49,7 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 
 	var posts []Post
 
-	result, err := db.Query("SELECT customerNumber,customerName, contactFirstName from customers")
+	result, err := db.Query("SELECT * from customers")
 	if err != nil {
 		panic(err.Error())
 	}

@@ -2,68 +2,61 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
-	"net/http"
+	"fmt"
+        "log"
+        "net/http"
 
-	_ "github.com/go-sql-driver/mysql"
-
-	"github.com/gorilla/mux"
+        _ "github.com/go-sql-driver/mysql"
+        "github.com/gorilla/mux"
+        "github.com/jmoiron/sqlx"
 )
 
-var db *sql.DB
 var err error
+var db *sqlx.DB
 
-type Post struct {
-	customerNumber         string `json:"customerNumber"`
-	customerName           string `json:"customerName"`
-	contactLastName        string `json:"contactLastName"`
-	contactFirstName       string `json:"contactFirstName"`
-	phone                  string `json:"phone"`
-	addressLine1           string `json:"addressLine1"`
-	addressLine2           string `json:"addressLine2"`
-	city                   string `json:"city"`
-	state                  string `json:"state"`
-	postalCode             string `json:"postalCode"`
-	country                string `json:"country"`
-	salesRepEmployeeNumber string `json:"salesRepEmployeeNumber"`
-	creditLimit            string `json:"creditLimit"`
+type Customers struct {
+        CustomerNumber         string `json:"customerNumber"`
+        CustomerName           string `json:"customerName"`
+        ContactLastName        string `json:"contactLastName"`
+        ContactFirstName       string `json:"contactFirstName"`
+        Phone                  string `json:"phone"`
+        AddressLine1           string `json:"addressLine1"`
+        AddressLine2           sql.NullString
+        City                   string `json:"city"`
+        State                  sql.NullString
+        PostalCode             string `json:"postalCode"`
+        Country                string `json:"country"`
+        SalesRepEmployeeNumber sql.NullString
+        CreditLimit            string `json:"creditLimit"`
 }
 
 func main() {
-	db, err = sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/classicmodels")
+        db, err := sqlx.Open("mysql", "root:127.0.0.1:3306)/classicmodels")
 
-	if err != nil {
-		panic(err.Error())
-	}
+        if err != nil {
+                panic(err.Error())
+        }
+        defer db.Close()
 
-	defer db.Close()
+        router := mux.NewRouter()
+        router.HandleFunc("/data", getPosts).Methods("GET")
 
-	router := mux.NewRouter()
-	router.HandleFunc("/posts", getPosts).Methods("GET")
-
-	http.ListenAndServe(":5555", router)
+        http.ListenAndServe(":4444", router)
 }
 
 func getPosts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+        w.Header().Set("Content-Type", "application/json")
 
-	var posts []Post
-
-	result, err := db.Query("SELECT * from customers")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer result.Close()
-
-	for result.Next() {
-		var post Post
-		err := result.Scan(&post.customerNumber, &post.customerName, &post.contactFirstName, &post.contactLastName, &post.phone, &post.addressLine1, &post.addressLine2, &post.city, &post.state, &post.postalCode, &post.country, &post.salesRepEmployeeNumber, &post.creditLimit)
-		if err != nil {
-			panic(err.Error())
-		}
-		posts = append(posts, post)
-	}
-
-	json.NewEncoder(w).Encode(posts)
+        post := Customers{}
+        rows, err := db.Queryx("SELECT * FROM customers")
+        if err != nil {
+                log.Fatal(err)
+        }
+        for rows.Next() {
+                err := rows.StructScan(&post)
+                if err != nil {
+                        log.Fatalln(err)
+                }
+                fmt.Printf("%#v\n", post)
+        }
 }

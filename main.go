@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -15,19 +15,19 @@ var db *sqlx.DB
 var err error
 
 type Customers struct {
-	CustomerNumber         string `db:"customerNumber"`
-	CustomerName           string `json:"customerName"`
-	ContactLastName        string `json:"contactLastName"`
-	ContactFirstName       string `json:"contactFirstName"`
-	Phone                  string `json:"phone"`
-	AddressLine1           string `json:"addressLine1"`
-	AddressLine2           sql.NullString
-	City                   string `json:"city"`
-	State                  sql.NullString
-	PostalCode             string `json:"postalCode"`
-	Country                string `json:"country"`
-	SalesRepEmployeeNumber sql.NullString
-	CreditLimit            string `json:"creditLimit"`
+	CustomerNumber         string         `json:"customerNumber" db:"customerNumber"`
+	CustomerName           string         `json:"customerName" db:"customerName"`
+	ContactLastName        string         `json:"contactLastName" db:"contactLastName"`
+	ContactFirstName       string         `json:"contactFirstName" db:"contactFirstName"`
+	Phone                  string         `json:"phone" db:"phone"`
+	AddressLine1           string         `json:"addressLine1" db:"addressLine1"`
+	AddressLine2           sql.NullString `db:"addressLine2"`
+	City                   string         `json:"city" db:"city"`
+	State                  sql.NullString `db:"state"`
+	PostalCode             sql.NullString `json:"postalCode" db:"postalCode"`
+	Country                string         `json:"country" db:"country"`
+	SalesRepEmployeeNumber sql.NullString `db:"salesRepEmployeeNumber"`
+	CreditLimit            string         `json:"creditLimit" db:"creditLimit"`
 }
 
 func main() {
@@ -57,6 +57,6 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		fmt.Printf("%#v\n", post)
+		json.NewEncoder(w).Encode(post)
 	}
 }

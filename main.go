@@ -15,7 +15,7 @@ var db *sqlx.DB
 var err error
 
 type Customers struct {
-	CustomerNumber         string `json:"customerNumber"`
+	CustomerNumber         string `db:"customerNumber"`
 	CustomerName           string `json:"customerName"`
 	ContactLastName        string `json:"contactLastName"`
 	ContactFirstName       string `json:"contactFirstName"`
@@ -31,7 +31,7 @@ type Customers struct {
 }
 
 func main() {
-	db, err = sqlx.Open("mysql", "root:(127.0.0.1:3306)/classicmodels")
+	db, err = sqlx.Open("mysql", "root:@tcp(127.0.0.1:3306)/classicmodels")
 
 	if err != nil {
 		panic(err.Error())

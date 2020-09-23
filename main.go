@@ -30,21 +30,33 @@ type Customers struct {
 	CreditLimit            string         `json:"creditLimit" db:"creditLimit"`
 }
 
+type Employees struct {
+	EmployeeNumber string         `json:"employeeNumber" db:"employeeNumber"`
+	LastName       string         `json:"lastName" db:"lastName"`
+	FirstName      string         `json:"firstName" db:"firstName"`
+	Extension      string         `json:"extension" db:"extension"`
+	Email          string         `json:"email" db:"email"`
+	OfficeCode     string         `json:"officeCode" db:"officeCode"`
+	ReportsTo      sql.NullString `json:"reportsTo" db:"reportsTo"`
+	JobTitle       string         `json:"jobTitle" db:"jobTitle"`
+}
+
 func main() {
-	db, err = sqlx.Open("mysql", "root:@tcp(127.0.0.1:3306)/classicmodels")
+	db, err = sqlx.Open("mysql", "root:#@tcp(127.0.0.1:3306)/classicmodels")
 
 	if err != nil {
 		panic(err.Error())
 	}
 	defer db.Close()
 
-	router := mux.NewRouter()
-	router.HandleFunc("/data", getPosts).Methods("GET")
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/customers", getCustomers).Methods("GET")
+	router.HandleFunc("/employees", getEmployees).Methods("GET")
 
 	http.ListenAndServe(":4444", router)
 }
 
-func getPosts(w http.ResponseWriter, r *http.Request) {
+func getCustomers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	post := Customers{}
@@ -58,5 +70,23 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 			log.Fatalln(err)
 		}
 		json.NewEncoder(w).Encode(post)
+	}
+}
+
+func getEmployees(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	employee := Employees{}
+	rows, err := db.Queryx("SELECT * FROM employees")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for rows.Next() {
+		err := rows.StructScan(&employee)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		json.NewEncoder(w).Encode(employee)
+
 	}
 }
